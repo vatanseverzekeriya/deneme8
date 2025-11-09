@@ -322,6 +322,15 @@ class SpriteGenerator {
                     case 'wolf':
                         this.drawWolf(ctx, x, y, dir, frame);
                         break;
+                    case 'dog':
+                        this.drawDog(ctx, x, y, dir, frame);
+                        break;
+                    case 'pig':
+                        this.drawPig(ctx, x, y, dir, frame);
+                        break;
+                    case 'bear':
+                        this.drawBear(ctx, x, y, dir, frame);
+                        break;
                     case 'goblin':
                         this.drawGoblin(ctx, x, y, dir, frame);
                         break;
@@ -516,6 +525,347 @@ class SpriteGenerator {
         ctx.lineWidth = 6;
         ctx.strokeStyle = furLight;
         ctx.stroke();
+
+        ctx.restore();
+    }
+
+    drawDog(ctx, x, y, direction, frame) {
+        ctx.save();
+        ctx.translate(x + this.spriteSize / 2, y + this.spriteSize / 2);
+
+        // Friendly dog movement - energetic and playful
+        const walkCycle = (frame / this.animationFrames) * Math.PI * 2;
+        const walkOffset = Math.sin(walkCycle) * 2.5;
+        const tailWag = Math.sin(walkCycle * 2) * 8; // Fast tail wagging
+
+        const angle = (direction * Math.PI * 2) / this.directions;
+        ctx.rotate(angle);
+
+        // Dog colors - brown/golden retriever
+        const furDark = '#8b6f47';
+        const furBase = '#b5926b';
+        const furLight = '#d4b896';
+        const furHighlight = '#e8d1b3';
+        const noseColor = '#2a2a2a';
+        const shadowColor = 'rgba(0, 0, 0, 0.3)';
+
+        // Shadow
+        ctx.fillStyle = shadowColor;
+        ctx.beginPath();
+        ctx.ellipse(0, this.spriteSize / 2 - 6, 18, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Body
+        ctx.fillStyle = furBase;
+        ctx.fillRect(-14, -10 + walkOffset, 28, 20);
+        ctx.fillStyle = furLight;
+        ctx.fillRect(-12, -8 + walkOffset, 24, 6);
+        ctx.fillStyle = furHighlight;
+        ctx.fillRect(-10, -6 + walkOffset, 8, 2);
+
+        // Head
+        ctx.fillStyle = furBase;
+        ctx.beginPath();
+        ctx.ellipse(0, -18 + walkOffset, 11, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = furLight;
+        ctx.beginPath();
+        ctx.ellipse(0, -19 + walkOffset, 8, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Snout
+        ctx.fillStyle = furLight;
+        ctx.fillRect(-4, -14 + walkOffset, 8, 6);
+        ctx.fillStyle = furBase;
+        ctx.fillRect(-3, -13 + walkOffset, 6, 4);
+
+        // Nose
+        ctx.fillStyle = noseColor;
+        ctx.beginPath();
+        ctx.arc(0, -11 + walkOffset, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ears - Floppy
+        ctx.fillStyle = furDark;
+        ctx.beginPath();
+        ctx.ellipse(-8, -22 + walkOffset, 4, 7, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(8, -22 + walkOffset, 4, 7, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes - Friendly
+        ctx.fillStyle = '#2a2a2a';
+        ctx.fillRect(-5, -20 + walkOffset, 2, 2);
+        ctx.fillRect(3, -20 + walkOffset, 2, 2);
+
+        // Legs with running motion
+        const legOffset = Math.sin(walkCycle) * 5;
+        const legOffset2 = Math.sin(walkCycle + Math.PI) * 5;
+        ctx.fillStyle = furBase;
+        ctx.fillRect(-11, 10 + walkOffset, 6, 16 + legOffset);
+        ctx.fillRect(-2, 10 + walkOffset, 6, 16 - legOffset);
+        ctx.fillRect(4, 10 + walkOffset, 6, 16 - legOffset2);
+        ctx.fillRect(13, 10 + walkOffset, 6, 16 + legOffset2);
+
+        // Paws
+        ctx.fillStyle = furDark;
+        ctx.fillRect(-11, 24 + walkOffset + legOffset, 6, 3);
+        ctx.fillRect(-2, 24 + walkOffset - legOffset, 6, 3);
+        ctx.fillRect(4, 24 + walkOffset - legOffset2, 6, 3);
+        ctx.fillRect(13, 24 + walkOffset + legOffset2, 6, 3);
+
+        // Tail - Wagging happily
+        ctx.fillStyle = furBase;
+        ctx.beginPath();
+        ctx.moveTo(15, 0 + walkOffset);
+        ctx.quadraticCurveTo(20 + tailWag, 5 + walkOffset, 18, 10 + walkOffset);
+        ctx.lineWidth = 7;
+        ctx.strokeStyle = furBase;
+        ctx.stroke();
+
+        ctx.fillStyle = furLight;
+        ctx.beginPath();
+        ctx.moveTo(15, 1 + walkOffset);
+        ctx.quadraticCurveTo(19 + tailWag, 6 + walkOffset, 17, 9 + walkOffset);
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = furLight;
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    drawPig(ctx, x, y, direction, frame) {
+        ctx.save();
+        ctx.translate(x + this.spriteSize / 2, y + this.spriteSize / 2);
+
+        // Pig movement - waddle
+        const walkCycle = (frame / this.animationFrames) * Math.PI * 2;
+        const walkOffset = Math.sin(walkCycle) * 1.5; // Less vertical movement
+        const bodyWaddle = Math.sin(walkCycle) * 3; // Side-to-side waddle
+
+        const angle = (direction * Math.PI * 2) / this.directions;
+        ctx.rotate(angle);
+
+        // Pig colors - pink
+        const skinDark = '#d4879c';
+        const skinBase = '#f4a7b9';
+        const skinLight = '#ffc0cb';
+        const skinHighlight = '#ffd9e0';
+        const snoutColor = '#e89aad';
+        const shadowColor = 'rgba(0, 0, 0, 0.3)';
+
+        // Shadow
+        ctx.fillStyle = shadowColor;
+        ctx.beginPath();
+        ctx.ellipse(0, this.spriteSize / 2 - 6, 20, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Body - Round
+        ctx.fillStyle = skinBase;
+        ctx.beginPath();
+        ctx.ellipse(bodyWaddle, -8 + walkOffset, 18, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = skinLight;
+        ctx.beginPath();
+        ctx.ellipse(bodyWaddle, -10 + walkOffset, 14, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = skinHighlight;
+        ctx.beginPath();
+        ctx.ellipse(bodyWaddle - 3, -12 + walkOffset, 8, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Head - Round
+        ctx.fillStyle = skinBase;
+        ctx.beginPath();
+        ctx.ellipse(0, -20 + walkOffset, 10, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = skinLight;
+        ctx.beginPath();
+        ctx.ellipse(0, -21 + walkOffset, 8, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Snout
+        ctx.fillStyle = snoutColor;
+        ctx.beginPath();
+        ctx.ellipse(0, -17 + walkOffset, 6, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Nostrils
+        ctx.fillStyle = skinDark;
+        ctx.fillRect(-3, -18 + walkOffset, 2, 2);
+        ctx.fillRect(1, -18 + walkOffset, 2, 2);
+
+        // Ears - Small triangles
+        ctx.fillStyle = skinBase;
+        ctx.beginPath();
+        ctx.moveTo(-8, -25 + walkOffset);
+        ctx.lineTo(-6, -28 + walkOffset);
+        ctx.lineTo(-4, -25 + walkOffset);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(8, -25 + walkOffset);
+        ctx.lineTo(6, -28 + walkOffset);
+        ctx.lineTo(4, -25 + walkOffset);
+        ctx.closePath();
+        ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = '#2a2a2a';
+        ctx.fillRect(-4, -23 + walkOffset, 2, 2);
+        ctx.fillRect(2, -23 + walkOffset, 2, 2);
+
+        // Legs - Short
+        const legOffset = Math.sin(walkCycle) * 3;
+        ctx.fillStyle = skinBase;
+        ctx.fillRect(-10, 6 + walkOffset, 5, 12 + legOffset);
+        ctx.fillRect(-1, 6 + walkOffset, 5, 12 - legOffset);
+        ctx.fillRect(3, 6 + walkOffset, 5, 12 - legOffset);
+        ctx.fillRect(12, 6 + walkOffset, 5, 12 + legOffset);
+
+        // Hooves
+        ctx.fillStyle = skinDark;
+        ctx.fillRect(-10, 16 + walkOffset + legOffset, 5, 3);
+        ctx.fillRect(-1, 16 + walkOffset - legOffset, 5, 3);
+        ctx.fillRect(3, 16 + walkOffset - legOffset, 5, 3);
+        ctx.fillRect(12, 16 + walkOffset + legOffset, 5, 3);
+
+        // Tail - Curly
+        ctx.strokeStyle = skinBase;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(16, -2 + walkOffset, 3, 0, Math.PI * 1.5);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    drawBear(ctx, x, y, direction, frame) {
+        ctx.save();
+        ctx.translate(x + this.spriteSize / 2, y + this.spriteSize / 2);
+
+        // Bear movement - heavy, powerful
+        const walkCycle = (frame / this.animationFrames) * Math.PI * 2;
+        const walkOffset = Math.sin(walkCycle) * 2; // Slow, heavy movement
+        const bodyRoll = Math.cos(walkCycle) * 2; // Body rolls slightly
+
+        const angle = (direction * Math.PI * 2) / this.directions;
+        ctx.rotate(angle);
+
+        // Bear colors - brown
+        const furDark = '#3a2a1a';
+        const furBase = '#5a4a3a';
+        const furLight = '#7a6a5a';
+        const furHighlight = '#9a8a7a';
+        const shadowColor = 'rgba(0, 0, 0, 0.4)';
+
+        // Shadow
+        ctx.fillStyle = shadowColor;
+        ctx.beginPath();
+        ctx.ellipse(0, this.spriteSize / 2 - 5, 24, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Body - Large
+        ctx.fillStyle = furBase;
+        ctx.fillRect(-18, -14 + walkOffset, 36, 28);
+
+        ctx.fillStyle = furLight;
+        ctx.fillRect(-16, -12 + walkOffset, 32, 12);
+        ctx.fillRect(-14, 0 + walkOffset, 28, 6);
+
+        ctx.fillStyle = furHighlight;
+        ctx.fillRect(-14, -10 + walkOffset, 10, 4);
+
+        // Hump (bear shoulder hump)
+        ctx.fillStyle = furBase;
+        ctx.beginPath();
+        ctx.ellipse(0, -18 + walkOffset, 14, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = furLight;
+        ctx.beginPath();
+        ctx.ellipse(0, -19 + walkOffset, 11, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Head - Large
+        ctx.fillStyle = furBase;
+        ctx.beginPath();
+        ctx.ellipse(0, -28 + walkOffset, 14, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = furLight;
+        ctx.beginPath();
+        ctx.ellipse(0, -29 + walkOffset, 11, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Snout
+        ctx.fillStyle = furLight;
+        ctx.fillRect(-5, -24 + walkOffset, 10, 8);
+        ctx.fillStyle = furBase;
+        ctx.fillRect(-4, -23 + walkOffset, 8, 6);
+
+        // Nose
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath();
+        ctx.ellipse(0, -20 + walkOffset, 3, 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ears - Round
+        ctx.fillStyle = furDark;
+        ctx.beginPath();
+        ctx.arc(-10, -34 + walkOffset, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(10, -34 + walkOffset, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = furBase;
+        ctx.beginPath();
+        ctx.arc(-10, -34 + walkOffset, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(10, -34 + walkOffset, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = '#2a2a2a';
+        ctx.fillRect(-6, -30 + walkOffset, 3, 3);
+        ctx.fillRect(3, -30 + walkOffset, 3, 3);
+
+        // Legs - Thick and powerful
+        const legOffset = Math.sin(walkCycle) * 4;
+        const legOffset2 = Math.sin(walkCycle + Math.PI) * 4;
+
+        ctx.fillStyle = furBase;
+        ctx.fillRect(-14, 14 + walkOffset, 8, 20 + legOffset);
+        ctx.fillRect(-2, 14 + walkOffset, 8, 20 - legOffset);
+        ctx.fillRect(6, 14 + walkOffset, 8, 20 - legOffset2);
+        ctx.fillRect(18, 14 + walkOffset, 8, 20 + legOffset2);
+
+        ctx.fillStyle = furLight;
+        ctx.fillRect(-13, 15 + walkOffset, 6, 4);
+        ctx.fillRect(-1, 15 + walkOffset, 6, 4);
+        ctx.fillRect(7, 15 + walkOffset, 6, 4);
+        ctx.fillRect(19, 15 + walkOffset, 6, 4);
+
+        // Paws with claws
+        ctx.fillStyle = furDark;
+        ctx.fillRect(-14, 32 + walkOffset + legOffset, 8, 4);
+        ctx.fillRect(-2, 32 + walkOffset - legOffset, 8, 4);
+        ctx.fillRect(6, 32 + walkOffset - legOffset2, 8, 4);
+        ctx.fillRect(18, 32 + walkOffset + legOffset2, 8, 4);
+
+        // Claws
+        ctx.fillStyle = '#4a4a4a';
+        for (let i = 0; i < 3; i++) {
+            ctx.fillRect(-13 + i * 3, 35 + walkOffset + legOffset, 2, 2);
+            ctx.fillRect(-1 + i * 3, 35 + walkOffset - legOffset, 2, 2);
+            ctx.fillRect(7 + i * 3, 35 + walkOffset - legOffset2, 2, 2);
+            ctx.fillRect(19 + i * 3, 35 + walkOffset + legOffset2, 2, 2);
+        }
 
         ctx.restore();
     }

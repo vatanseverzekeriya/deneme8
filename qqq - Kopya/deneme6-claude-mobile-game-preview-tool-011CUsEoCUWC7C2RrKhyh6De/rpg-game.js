@@ -18,6 +18,9 @@ const CLASSES = {
 // Mob types - Sprite-based
 const MOB_TYPES = [
     { name: 'Kurt', spriteType: 'wolf', hp: 50, damage: 8, xp: 25, gold: 10, speed: 1.5 },
+    { name: 'Köpek', spriteType: 'dog', hp: 40, damage: 6, xp: 20, gold: 8, speed: 1.6 },
+    { name: 'Domuz', spriteType: 'pig', hp: 45, damage: 5, xp: 15, gold: 12, speed: 1.3 },
+    { name: 'Ayı', spriteType: 'bear', hp: 100, damage: 18, xp: 50, gold: 25, speed: 1.0 },
     { name: 'Goblin', spriteType: 'goblin', hp: 60, damage: 10, xp: 30, gold: 15, speed: 1.2 },
     { name: 'Ork', spriteType: 'orc', hp: 80, damage: 12, xp: 40, gold: 20, speed: 1.0 },
     { name: 'Troll', spriteType: 'troll', hp: 120, damage: 15, xp: 60, gold: 30, speed: 0.8 },
@@ -72,6 +75,9 @@ class Game {
         this.cameraX = 0;
         this.cameraY = 0;
 
+        // Biome system - will be initialized after map system
+        this.biomeSystem = null;
+
         // Initialize sprites and map
         this.initialized = false;
         console.log('Starting game initialization...');
@@ -93,6 +99,15 @@ class Game {
             })
         ]).then(() => {
             console.log('All systems initialized');
+
+            // Initialize biome system after map is ready
+            this.biomeSystem = new BiomeSystem(
+                this.mapSystem.mapWidth,
+                this.mapSystem.mapHeight,
+                this.mapSystem.tileSize
+            );
+            console.log('Biome system initialized');
+
             this.initialized = true;
             this.setupControls();
             console.log('Game ready!');
@@ -386,6 +401,11 @@ class Game {
             }
         }
         
+        // Draw biome regions (if available)
+        if (this.biomeSystem) {
+            this.biomeSystem.drawOnMiniMap(ctx, scale);
+        }
+
         // Draw city center circle
         const cityCenterX = this.mapSystem.cityCenterX * tileSize;
         const cityCenterY = this.mapSystem.cityCenterY * tileSize;
@@ -395,14 +415,38 @@ class Game {
         ctx.beginPath();
         ctx.arc(cityCenterX, cityCenterY, cityRadius, 0, Math.PI * 2);
         ctx.stroke();
-        
+
         // Draw merchant/shop
         const shopX = (this.mapSystem.shopX / this.mapSystem.tileSize) * tileSize;
         const shopY = (this.mapSystem.shopY / this.mapSystem.tileSize) * tileSize;
         ctx.fillStyle = '#ffd700';
         ctx.fillRect(shopX - 2, shopY - 2, 4, 4);
-        
-        // Draw player
+
+        // Draw all mobs/animals in real-time with color-coding
+        this.mobs.forEach(mob => {
+            const mobX = (mob.x / this.mapSystem.tileSize) * tileSize;
+            const mobY = (mob.y / this.mapSystem.tileSize) * tileSize;
+
+            // Color based on animal type
+            let mobColor = '#ff0000'; // default red
+            switch(mob.spriteType) {
+                case 'wolf': mobColor = '#8b7355'; break;
+                case 'dog': mobColor = '#b5926b'; break;
+                case 'pig': mobColor = '#ffc0cb'; break;
+                case 'bear': mobColor = '#5a4a3a'; break;
+                case 'goblin': mobColor = '#4A8A4A'; break;
+                case 'orc': mobColor = '#556B2F'; break;
+                case 'troll': mobColor = '#8B7355'; break;
+                case 'dragon': mobColor = '#8B0000'; break;
+            }
+
+            ctx.fillStyle = mobColor;
+            ctx.beginPath();
+            ctx.arc(mobX, mobY, 2, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Draw player on top
         const playerX = (this.player.x / this.mapSystem.tileSize) * tileSize;
         const playerY = (this.player.y / this.mapSystem.tileSize) * tileSize;
         ctx.fillStyle = '#00ff00';
@@ -523,6 +567,11 @@ class Game {
             }
         }
         
+        // Draw biome regions (if available)
+        if (this.biomeSystem) {
+            this.biomeSystem.drawOnMiniMap(ctx, scale);
+        }
+
         // Draw city center circle
         const cityCenterX = this.mapSystem.cityCenterX * tileSize;
         const cityCenterY = this.mapSystem.cityCenterY * tileSize;
@@ -532,14 +581,38 @@ class Game {
         ctx.beginPath();
         ctx.arc(cityCenterX, cityCenterY, cityRadius, 0, Math.PI * 2);
         ctx.stroke();
-        
+
         // Draw merchant/shop
         const shopX = (this.mapSystem.shopX / this.mapSystem.tileSize) * tileSize;
         const shopY = (this.mapSystem.shopY / this.mapSystem.tileSize) * tileSize;
         ctx.fillStyle = '#ffd700';
         ctx.fillRect(shopX - 3, shopY - 3, 6, 6);
-        
-        // Draw player
+
+        // Draw all mobs/animals in real-time with color-coding
+        this.mobs.forEach(mob => {
+            const mobX = (mob.x / this.mapSystem.tileSize) * tileSize;
+            const mobY = (mob.y / this.mapSystem.tileSize) * tileSize;
+
+            // Color based on animal type
+            let mobColor = '#ff0000'; // default red
+            switch(mob.spriteType) {
+                case 'wolf': mobColor = '#8b7355'; break;
+                case 'dog': mobColor = '#b5926b'; break;
+                case 'pig': mobColor = '#ffc0cb'; break;
+                case 'bear': mobColor = '#5a4a3a'; break;
+                case 'goblin': mobColor = '#4A8A4A'; break;
+                case 'orc': mobColor = '#556B2F'; break;
+                case 'troll': mobColor = '#8B7355'; break;
+                case 'dragon': mobColor = '#8B0000'; break;
+            }
+
+            ctx.fillStyle = mobColor;
+            ctx.beginPath();
+            ctx.arc(mobX, mobY, 3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Draw player on top
         const playerX = (this.player.x / this.mapSystem.tileSize) * tileSize;
         const playerY = (this.player.y / this.mapSystem.tileSize) * tileSize;
         ctx.fillStyle = '#00ff00';
@@ -684,33 +757,60 @@ class Game {
     }
 
     spawnMobs() {
-        // Spawn mobs in groups of 3 - spawn throughout the entire map
-        const groupCount = 20 + Math.floor(this.player.level / 2); // More groups for entire map
-
-        for (let i = 0; i < groupCount; i++) {
-            this.spawnMobGroup();
+        // Use biome system to spawn animals in their respective regions
+        if (this.biomeSystem) {
+            console.log('Spawning animals using biome system...');
+            const animals = this.biomeSystem.spawnInitialAnimals(this.mapSystem, MOB_TYPES);
+            this.mobs = animals;
+            console.log(`Spawned ${animals.length} animals across all biomes`);
+        } else {
+            console.warn('Biome system not initialized, falling back to random spawning');
+            // Fallback to old system
+            const groupCount = 20 + Math.floor(this.player.level / 2);
+            for (let i = 0; i < groupCount; i++) {
+                this.spawnMobGroup();
+            }
         }
-        
+
         // Continue spawning mobs throughout the map
         this.continuousSpawnMobs();
     }
 
     continuousSpawnMobs() {
-        // Spawn mobs continuously throughout the map (not just around player)
+        // Spawn mobs continuously using biome system to maintain animal distribution
         setInterval(() => {
-            if (this.mobs.length < 100) { // Keep mob count reasonable
-                // Spawn in random locations across the map
-                if (this.mapSystem) {
-                    const randomX = Math.random() * this.mapSystem.mapWidth * this.mapSystem.tileSize;
-                    const randomY = Math.random() * this.mapSystem.mapHeight * this.mapSystem.tileSize;
-                    
-                    // Don't spawn in safe zone (inside river) or city center
-                    if (!this.mapSystem.isSafeZone(randomX, randomY)) {
-                        this.spawnMobGroupAt(randomX, randomY);
+            if (this.mobs.length < 100 && this.biomeSystem) {
+                // Check each region and respawn if needed
+                this.biomeSystem.regions.forEach(region => {
+                    if (this.biomeSystem.shouldRespawnInRegion(this.mobs, region.name)) {
+                        // Spawn one animal in this region
+                        const animalType = region.getRandomAnimalType();
+                        if (animalType) {
+                            const mobType = MOB_TYPES.find(m => m.spriteType === animalType);
+                            if (mobType) {
+                                const pos = this.biomeSystem.getValidSpawnPosition(region, this.mapSystem);
+                                const animal = {
+                                    ...mobType,
+                                    x: pos.x,
+                                    y: pos.y,
+                                    maxHP: mobType.hp,
+                                    size: 56,
+                                    targetCooldown: 0,
+                                    dx: 0,
+                                    dy: 0,
+                                    groupId: null,
+                                    isAggressive: false,
+                                    aggroTarget: null,
+                                    wanderTarget: null,
+                                    biomeRegion: region.name
+                                };
+                                this.mobs.push(animal);
+                            }
+                        }
                     }
-                }
+                });
             }
-        }, 10000); // Spawn every 10 seconds
+        }, 10000); // Check every 10 seconds
     }
 
     spawnMobGroupAt(centerX, centerY) {
