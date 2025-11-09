@@ -6,10 +6,11 @@ class AnimationSystem {
         this.spriteSize = 64;
         this.animationFrames = 4;
         this.directions = 8;
-        this.frameTime = 150; // milliseconds per frame
+        this.frameTime = 100; // milliseconds per frame - Smoother animation (was 150)
         this.currentFrame = 0;
         this.frameTimer = 0;
-        
+        this.frameProgress = 0; // For sub-frame interpolation (smooth transitions)
+
         // Direction mapping: 0=N, 1=NE, 2=E, 3=SE, 4=S, 5=SW, 6=W, 7=NW
         this.directionNames = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'];
     }
@@ -43,18 +44,32 @@ class AnimationSystem {
         return direction;
     }
 
-    // Update animation frame
+    // Update animation frame with smooth interpolation
     update(deltaTime, isMoving) {
         if (isMoving) {
             this.frameTimer += deltaTime;
+
+            // Calculate frame progress for smooth interpolation
+            this.frameProgress = this.frameTimer / this.frameTime;
+
             if (this.frameTimer >= this.frameTime) {
                 this.currentFrame = (this.currentFrame + 1) % this.animationFrames;
                 this.frameTimer = 0;
+                this.frameProgress = 0;
             }
         } else {
-            // Idle animation (first frame)
-            this.currentFrame = 0;
-            this.frameTimer = 0;
+            // Smooth transition to idle (gradually return to frame 0)
+            if (this.currentFrame !== 0) {
+                this.frameTimer += deltaTime;
+                if (this.frameTimer >= this.frameTime / 2) { // Faster return to idle
+                    this.currentFrame = 0;
+                    this.frameTimer = 0;
+                    this.frameProgress = 0;
+                }
+            } else {
+                this.frameTimer = 0;
+                this.frameProgress = 0;
+            }
         }
     }
 

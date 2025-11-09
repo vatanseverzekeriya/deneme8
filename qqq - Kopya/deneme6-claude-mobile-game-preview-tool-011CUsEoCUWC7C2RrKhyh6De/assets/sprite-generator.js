@@ -60,10 +60,14 @@ class SpriteGenerator {
         const skinTone = '#8b6a4a';
         const eyeColor = '#ff4444';
 
-        // Animation offset for walking
-        const walkOffset = Math.sin(frame * Math.PI / 2) * 2.5;
-        const armSwing = Math.sin(frame * Math.PI / 2) * 4;
-        const legOffset = Math.sin(frame * Math.PI / 2) * 5;
+        // Realistic animation offsets for smooth walking
+        // Using sine wave for smooth, natural motion
+        const walkCycle = (frame / this.animationFrames) * Math.PI * 2;
+        const walkOffset = Math.sin(walkCycle) * 3.5;  // Vertical bob - more pronounced
+        const walkSway = Math.cos(walkCycle) * 1.5;    // Horizontal sway for realism
+        const armSwing = Math.sin(walkCycle + Math.PI) * 6;  // Arms swing opposite to legs
+        const legOffset = Math.sin(walkCycle) * 7;     // More pronounced leg movement
+        const shoulderRotate = Math.sin(walkCycle) * 1.5; // Shoulder rotation for natural motion
 
         // Draw realistic shadow with gradient
         const shadowGradient = ctx.createRadialGradient(0, this.spriteSize / 2 - 6, 0, 0, this.spriteSize / 2 - 6, 25);
@@ -340,8 +344,13 @@ class SpriteGenerator {
     drawWolf(ctx, x, y, direction, frame) {
         ctx.save();
         ctx.translate(x + this.spriteSize / 2, y + this.spriteSize / 2);
-        
-        const walkOffset = Math.sin(frame * Math.PI / 2) * 2.5;
+
+        // Realistic wolf movement - galloping motion
+        const walkCycle = (frame / this.animationFrames) * Math.PI * 2;
+        const walkOffset = Math.sin(walkCycle) * 3;  // Vertical bob during run
+        const bodyStretch = Math.abs(Math.sin(walkCycle)) * 2; // Body stretches when running
+        const headBob = Math.sin(walkCycle + Math.PI / 4) * 2; // Head bobs slightly ahead
+
         const angle = (direction * Math.PI * 2) / this.directions;
         ctx.rotate(angle);
 
@@ -447,8 +456,9 @@ class SpriteGenerator {
         ctx.arc(6, -22 + walkOffset, 2, 0, Math.PI * 2);
         ctx.fill();
         
-        // Legs - Front Left
-        const legOffset = Math.sin(frame * Math.PI / 2) * 4;
+        // Legs - Front Left (galloping motion - more dynamic)
+        const legOffset = Math.sin(walkCycle) * 6;  // More pronounced leg movement
+        const legOffset2 = Math.sin(walkCycle + Math.PI) * 6; // Opposite phase for diagonal gait
         ctx.fillStyle = furBase;
         ctx.fillRect(-13, 12 + walkOffset, 7, 18 + legOffset);
         ctx.fillStyle = furLight;
@@ -456,50 +466,53 @@ class SpriteGenerator {
         ctx.fillStyle = furDark;
         ctx.fillRect(-11, 17 + walkOffset, 3, 12 + legOffset);
         
-        // Legs - Front Right
+        // Legs - Front Right (opposite phase)
         ctx.fillStyle = furBase;
         ctx.fillRect(-3, 12 + walkOffset, 7, 18 - legOffset);
         ctx.fillStyle = furLight;
         ctx.fillRect(-2, 13 + walkOffset, 5, 4);
         ctx.fillStyle = furDark;
         ctx.fillRect(-1, 17 + walkOffset, 3, 12 - legOffset);
-        
-        // Legs - Back Left
+
+        // Legs - Back Left (diagonal gait - same phase as front right)
         ctx.fillStyle = furBase;
-        ctx.fillRect(5, 12 + walkOffset, 7, 18 + legOffset);
+        ctx.fillRect(5, 12 + walkOffset, 7, 18 - legOffset2);
         ctx.fillStyle = furLight;
         ctx.fillRect(6, 13 + walkOffset, 5, 4);
         ctx.fillStyle = furDark;
-        ctx.fillRect(7, 17 + walkOffset, 3, 12 + legOffset);
-        
-        // Legs - Back Right
+        ctx.fillRect(7, 17 + walkOffset, 3, 12 - legOffset2);
+
+        // Legs - Back Right (diagonal gait - same phase as front left)
         ctx.fillStyle = furBase;
-        ctx.fillRect(15, 12 + walkOffset, 7, 18 - legOffset);
+        ctx.fillRect(15, 12 + walkOffset, 7, 18 + legOffset2);
         ctx.fillStyle = furLight;
         ctx.fillRect(16, 13 + walkOffset, 5, 4);
         ctx.fillStyle = furDark;
-        ctx.fillRect(17, 17 + walkOffset, 3, 12 - legOffset);
+        ctx.fillRect(17, 17 + walkOffset, 3, 12 + legOffset2);
         
-        // Paws
+        // Paws (with proper offset)
         ctx.fillStyle = furDark;
         ctx.fillRect(-13, 28 + walkOffset + legOffset, 7, 4);
         ctx.fillRect(-3, 28 + walkOffset - legOffset, 7, 4);
-        ctx.fillRect(5, 28 + walkOffset + legOffset, 7, 4);
-        ctx.fillRect(15, 28 + walkOffset - legOffset, 7, 4);
-        
-        // Tail - Flowing
+        ctx.fillRect(5, 28 + walkOffset - legOffset2, 7, 4);
+        ctx.fillRect(15, 28 + walkOffset + legOffset2, 7, 4);
+
+        // Tail - Dynamic flowing motion
+        const tailSway = Math.sin(walkCycle + Math.PI / 2) * 4;  // Tail sways during run
+        const tailHeight = Math.cos(walkCycle) * 3;  // Tail height changes
+
         ctx.fillStyle = furBase;
         ctx.beginPath();
         ctx.moveTo(17, 2 + walkOffset);
-        ctx.quadraticCurveTo(23 + Math.sin(frame * 0.5) * 2, 8 + walkOffset, 20, 14 + walkOffset);
+        ctx.quadraticCurveTo(23 + tailSway, 8 + walkOffset + tailHeight, 20, 14 + walkOffset);
         ctx.lineWidth = 8;
         ctx.strokeStyle = furBase;
         ctx.stroke();
-        
+
         ctx.fillStyle = furLight;
         ctx.beginPath();
         ctx.moveTo(17, 3 + walkOffset);
-        ctx.quadraticCurveTo(22 + Math.sin(frame * 0.5) * 2, 9 + walkOffset, 19, 13 + walkOffset);
+        ctx.quadraticCurveTo(22 + tailSway, 9 + walkOffset + tailHeight, 19, 13 + walkOffset);
         ctx.lineWidth = 6;
         ctx.strokeStyle = furLight;
         ctx.stroke();

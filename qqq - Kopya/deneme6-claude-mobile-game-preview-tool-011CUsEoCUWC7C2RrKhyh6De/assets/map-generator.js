@@ -29,7 +29,7 @@ class MapGenerator {
         return tiles;
     }
 
-    // Generate grass tiles with variations
+    // Generate realistic grass tiles with fine details
     generateGrassTiles() {
         const canvas = document.createElement('canvas');
         canvas.width = this.tileSize;
@@ -37,33 +37,146 @@ class MapGenerator {
         const ctx = canvas.getContext('2d');
         ctx.imageSmoothingEnabled = false;
 
-        // Base grass color
+        // Realistic grass color palette
+        const grassDeep = '#0f2a0f';
         const grassDark = '#143214';
+        const grassMid = '#1d4a1d';
         const grassBase = '#265826';
         const grassLight = '#3b7a39';
+        const grassBright = '#4a8a4a';
         const grassHighlight = '#54a854';
+        const grassShine = '#68b868';
+        const yellowGrass = '#6a8a3a';  // Dried grass
 
-        // Base grass
-        ctx.fillStyle = grassBase;
+        // Base grass with subtle gradient
+        const baseGrad = ctx.createLinearGradient(0, 0, 0, this.tileSize);
+        baseGrad.addColorStop(0, grassBase);
+        baseGrad.addColorStop(0.5, grassMid);
+        baseGrad.addColorStop(1, grassDark);
+        ctx.fillStyle = baseGrad;
         ctx.fillRect(0, 0, this.tileSize, this.tileSize);
 
-        // Layered noise for rich texture
-        for (let i = 0; i < 250; i++) {
+        // Multi-layer noise for realistic ground texture
+        for (let i = 0; i < 400; i++) {
             const x = Math.random() * this.tileSize;
             const y = Math.random() * this.tileSize;
-            const n = Math.sin(x * 0.6) * Math.cos(y * 0.5) * 0.5 + 0.5;
-            const tone = n < 0.5 ? grassDark : grassLight;
+
+            // Perlin-like noise pattern
+            const noiseX = Math.sin(x * 0.4) * Math.cos(y * 0.3);
+            const noiseY = Math.cos(x * 0.5) * Math.sin(y * 0.4);
+            const combined = (noiseX + noiseY) * 0.5 + 0.5;
+
+            let tone;
+            if (combined < 0.2) {
+                tone = grassDeep;
+            } else if (combined < 0.4) {
+                tone = grassDark;
+            } else if (combined < 0.6) {
+                tone = grassMid;
+            } else if (combined < 0.8) {
+                tone = grassLight;
+            } else {
+                tone = grassBright;
+            }
+
             ctx.fillStyle = tone;
+            ctx.globalAlpha = 0.6;
             ctx.fillRect(x, y, 1, 1);
         }
 
-        // Grass highlights
-        for (let i = 0; i < 20; i++) {
-            const x = Math.random() * this.tileSize;
-            const y = Math.random() * this.tileSize;
-            ctx.fillStyle = grassHighlight;
-            ctx.fillRect(x, y, 1, 1);
+        ctx.globalAlpha = 1.0;
+
+        // Individual grass blades - vertical strokes for realism
+        for (let i = 0; i < 80; i++) {
+            const bladeX = Math.random() * this.tileSize;
+            const bladeY = Math.random() * this.tileSize;
+            const bladeHeight = 2 + Math.random() * 4;
+            const bladeWidth = Math.random() < 0.7 ? 1 : 2;
+
+            // Grass blade color variation
+            const bladeShade = Math.random();
+            let bladeColor;
+            if (bladeShade < 0.1) {
+                bladeColor = yellowGrass;  // Some dried grass
+            } else if (bladeShade < 0.3) {
+                bladeColor = grassDark;
+            } else if (bladeShade < 0.6) {
+                bladeColor = grassLight;
+            } else if (bladeShade < 0.85) {
+                bladeColor = grassBright;
+            } else {
+                bladeColor = grassHighlight;
+            }
+
+            ctx.fillStyle = bladeColor;
+            ctx.globalAlpha = 0.4 + Math.random() * 0.4;
+
+            // Draw grass blade as vertical line
+            ctx.fillRect(bladeX, bladeY, bladeWidth, bladeHeight);
+
+            // Add slight curve/bend to some blades
+            if (Math.random() < 0.3) {
+                ctx.fillRect(bladeX + (Math.random() < 0.5 ? -1 : 1), bladeY + bladeHeight / 2, 1, bladeHeight / 2);
+            }
         }
+
+        ctx.globalAlpha = 1.0;
+
+        // Grass tips highlights (sunlight catching tips)
+        for (let i = 0; i < 50; i++) {
+            const tipX = Math.random() * this.tileSize;
+            const tipY = Math.random() * this.tileSize;
+            const tipBrightness = Math.random();
+
+            if (tipBrightness > 0.7) {
+                ctx.fillStyle = grassShine;
+                ctx.globalAlpha = 0.3 + tipBrightness * 0.4;
+                ctx.fillRect(tipX, tipY, 1, 2);
+            }
+        }
+
+        ctx.globalAlpha = 1.0;
+
+        // Subtle clumps and patches
+        for (let i = 0; i < 15; i++) {
+            const clumpX = Math.random() * this.tileSize;
+            const clumpY = Math.random() * this.tileSize;
+            const clumpSize = 2 + Math.random() * 3;
+
+            ctx.fillStyle = Math.random() < 0.5 ? grassDark : grassLight;
+            ctx.globalAlpha = 0.2;
+
+            ctx.beginPath();
+            ctx.arc(clumpX, clumpY, clumpSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.globalAlpha = 1.0;
+
+        // Soil/dirt patches showing through
+        for (let i = 0; i < 8; i++) {
+            const soilX = Math.random() * this.tileSize;
+            const soilY = Math.random() * this.tileSize;
+            const soilSize = 1 + Math.random() * 2;
+
+            ctx.fillStyle = '#3a2a1a';
+            ctx.globalAlpha = 0.3;
+            ctx.fillRect(soilX, soilY, soilSize, soilSize);
+        }
+
+        ctx.globalAlpha = 1.0;
+
+        // Dew/moisture sparkles (very subtle)
+        for (let i = 0; i < 12; i++) {
+            const dewX = Math.random() * this.tileSize;
+            const dewY = Math.random() * this.tileSize;
+
+            ctx.fillStyle = '#a8d8a8';
+            ctx.globalAlpha = 0.2;
+            ctx.fillRect(dewX, dewY, 1, 1);
+        }
+
+        ctx.globalAlpha = 1.0;
 
         return canvas;
     }
@@ -251,49 +364,142 @@ class MapGenerator {
     }
 
     drawWaterFrame(ctx, x, y, frame) {
+        // Realistic water colors with depth
+        const waterDeep = '#0a1a2f';
         const waterDark = '#12243f';
         const waterBase = '#1f3d66';
-        const waterLight = '#2f5f8f';
-        const waterHighlight = '#5aa1d6';
+        const waterMid = '#2a4d7a';
+        const waterLight = '#3a6a9f';
+        const waterShimmer = '#5aa1d6';
+        const waterSparkle = '#8fc4e8';
+        const waterGlow = '#b3d9f2';
 
-        // Base water
-        const vertGrad = ctx.createLinearGradient(x, y, x, y + this.tileSize);
-        vertGrad.addColorStop(0, waterBase);
-        vertGrad.addColorStop(1, waterDark);
-        ctx.fillStyle = vertGrad;
+        // Base water with depth gradient
+        const depthGrad = ctx.createLinearGradient(x, y, x, y + this.tileSize);
+        depthGrad.addColorStop(0, waterBase);
+        depthGrad.addColorStop(0.4, waterMid);
+        depthGrad.addColorStop(0.7, waterDark);
+        depthGrad.addColorStop(1, waterDeep);
+        ctx.fillStyle = depthGrad;
         ctx.fillRect(x, y, this.tileSize, this.tileSize);
 
-        // Water waves - animated
-        const waveOffset = Math.sin(frame * Math.PI / 2) * 2;
-        
-        // Horizontal waves
-        for (let i = 0; i < 6; i++) {
-            const waveY = (i * 8) + waveOffset;
+        // Realistic wave patterns - multiple layers
+        const wavePhase1 = Math.sin(frame * Math.PI / 2) * 3;
+        const wavePhase2 = Math.cos(frame * Math.PI / 2 + Math.PI / 4) * 2;
+        const wavePhase3 = Math.sin(frame * Math.PI / 2 + Math.PI / 3) * 1.5;
+
+        // Large waves (primary)
+        for (let i = 0; i < 4; i++) {
+            const waveY = (i * 10) + wavePhase1;
+            const waveAlpha = 0.6 + Math.sin(frame * Math.PI / 2 + i * 0.5) * 0.4;
+
+            // Wave peak
             ctx.fillStyle = waterLight;
-            ctx.fillRect(x, (waveY % this.tileSize), this.tileSize, 2);
+            ctx.globalAlpha = waveAlpha * 0.7;
+            ctx.fillRect(x, y + (waveY % this.tileSize), this.tileSize, 3);
+
+            // Wave trough
             ctx.fillStyle = waterDark;
-            ctx.fillRect(x, ((waveY + 2) % this.tileSize), this.tileSize, 1);
+            ctx.globalAlpha = waveAlpha * 0.5;
+            ctx.fillRect(x, y + ((waveY + 5) % this.tileSize), this.tileSize, 2);
         }
 
-        // Water highlights
-        for (let i = 0; i < 14; i++) {
-            const px = x + Math.random() * this.tileSize;
-            const py = y + Math.random() * this.tileSize;
-            ctx.fillStyle = waterHighlight;
-            ctx.fillRect(px, py, 1, 1);
+        // Medium waves (secondary layer)
+        for (let i = 0; i < 6; i++) {
+            const waveY = (i * 6) + wavePhase2;
+            ctx.fillStyle = waterMid;
+            ctx.globalAlpha = 0.4;
+            ctx.fillRect(x, y + (waveY % this.tileSize), this.tileSize, 1);
         }
 
-        // Ripples
+        // Small ripples (tertiary layer)
+        for (let i = 0; i < 8; i++) {
+            const rippleY = (i * 4) + wavePhase3;
+            ctx.fillStyle = waterLight;
+            ctx.globalAlpha = 0.2;
+            ctx.fillRect(x, y + (rippleY % this.tileSize), this.tileSize, 1);
+        }
+
+        ctx.globalAlpha = 1.0;
+
+        // Realistic water shimmer (moving light reflections)
+        const shimmerCount = 20 + Math.floor(Math.sin(frame * Math.PI / 2) * 5);
+        for (let i = 0; i < shimmerCount; i++) {
+            const shimmerX = x + (i * 3 + frame * 2) % this.tileSize;
+            const shimmerY = y + (i * 5 + Math.sin(frame * 0.5 + i) * 4) % this.tileSize;
+            const shimmerSize = 1 + Math.random() * 2;
+
+            // Sparkle effect
+            const sparkleAlpha = 0.3 + Math.sin(frame * Math.PI + i * 0.3) * 0.3;
+            ctx.fillStyle = waterShimmer;
+            ctx.globalAlpha = sparkleAlpha;
+            ctx.fillRect(shimmerX, shimmerY, shimmerSize, shimmerSize);
+        }
+
+        ctx.globalAlpha = 1.0;
+
+        // Bright sparkles (sun/moon reflections)
+        for (let i = 0; i < 8; i++) {
+            const sparklePhase = (frame + i * 0.5) % 4;
+            if (sparklePhase < 1) {  // Only show sparkle periodically
+                const px = x + (Math.sin(i * 2) * 8 + this.tileSize / 2);
+                const py = y + (Math.cos(i * 3) * 8 + this.tileSize / 2);
+                const sparkleAlpha = Math.sin(sparklePhase * Math.PI);
+
+                ctx.fillStyle = waterGlow;
+                ctx.globalAlpha = sparkleAlpha * 0.8;
+                ctx.fillRect(px - 1, py - 1, 3, 3);
+
+                ctx.fillStyle = waterSparkle;
+                ctx.globalAlpha = sparkleAlpha * 0.6;
+                ctx.fillRect(px, py, 2, 2);
+            }
+        }
+
+        ctx.globalAlpha = 1.0;
+
+        // Dynamic ripple circles (wave interference patterns)
         ctx.strokeStyle = waterLight;
         ctx.lineWidth = 1;
-        for (let i = 0; i < 4; i++) {
-            const centerX = x + this.tileSize / 2 + (Math.random() - 0.5) * 8;
-            const centerY = y + this.tileSize / 2 + (Math.random() - 0.5) * 8;
-            const radius = 4 + Math.sin(frame * Math.PI / 2 + i) * 2;
+        ctx.globalAlpha = 0.3;
+
+        for (let i = 0; i < 3; i++) {
+            const ripplePhase = (frame + i) % 4;
+            const centerX = x + this.tileSize / 2 + Math.sin(i * 2.1) * 8;
+            const centerY = y + this.tileSize / 2 + Math.cos(i * 2.3) * 8;
+            const radius = 3 + ripplePhase * 2;
+            const rippleAlpha = 1 - (ripplePhase / 4);
+
+            ctx.globalAlpha = rippleAlpha * 0.4;
             ctx.beginPath();
             ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
             ctx.stroke();
+
+            // Inner ripple
+            ctx.globalAlpha = rippleAlpha * 0.2;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius + 2, 0, Math.PI * 2);
+            ctx.stroke();
         }
+
+        ctx.globalAlpha = 1.0;
+
+        // Foam highlights on wave peaks
+        for (let i = 0; i < 3; i++) {
+            const foamY = (i * 12 + wavePhase1) % this.tileSize;
+            const foamAlpha = 0.2 + Math.sin(frame * Math.PI / 2 + i) * 0.2;
+
+            ctx.fillStyle = waterGlow;
+            ctx.globalAlpha = foamAlpha;
+
+            // Small foam dots
+            for (let j = 0; j < 8; j++) {
+                const foamX = x + (j * 4 + Math.random() * 2);
+                ctx.fillRect(foamX, y + foamY, 1 + Math.random(), 1);
+            }
+        }
+
+        ctx.globalAlpha = 1.0;
     }
 
     // Generate 20 different tree types
