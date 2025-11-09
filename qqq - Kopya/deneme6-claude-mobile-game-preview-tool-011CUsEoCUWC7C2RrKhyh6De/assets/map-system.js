@@ -351,6 +351,26 @@ class MapSystem {
         return distToCenter < this.riverInnerRadius;
     }
 
+    // Check if position is in the river itself (water tiles)
+    isInRiver(x, y) {
+        const tileX = Math.floor(x / this.tileSize);
+        const tileY = Math.floor(y / this.tileSize);
+
+        // Check bounds
+        if (tileX < 0 || tileX >= this.mapWidth || tileY < 0 || tileY >= this.mapHeight) {
+            return false;
+        }
+
+        const distToCenter = Math.sqrt(
+            Math.pow(tileX - this.cityCenterX, 2) +
+            Math.pow(tileY - this.cityCenterY, 2)
+        );
+
+        // Check if position is in the river ring (between inner radius and outer radius)
+        return distToCenter >= this.riverInnerRadius &&
+               distToCenter < this.riverInnerRadius + this.riverWidth;
+    }
+
     // Safe zone includes city center and the entire area inside the river
     isSafeZone(x, y) {
         return this.isInCityCenter(x, y) || this.isInsideInnerRiverArea(x, y);

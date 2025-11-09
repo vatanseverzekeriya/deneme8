@@ -703,9 +703,9 @@ class Game {
                 if (this.mapSystem) {
                     const randomX = Math.random() * this.mapSystem.mapWidth * this.mapSystem.tileSize;
                     const randomY = Math.random() * this.mapSystem.mapHeight * this.mapSystem.tileSize;
-                    
-                    // Don't spawn in safe zone (inside river) or city center
-                    if (!this.mapSystem.isSafeZone(randomX, randomY)) {
+
+                    // Don't spawn in safe zone (inside river), city center, or in the river itself
+                    if (!this.mapSystem.isSafeZone(randomX, randomY) && !this.mapSystem.isInRiver(randomX, randomY)) {
                         this.spawnMobGroupAt(randomX, randomY);
                     }
                 }
@@ -812,7 +812,7 @@ class Game {
         );
         const type = MOB_TYPES[Math.floor(Math.random() * (typeIndex + 1))];
 
-        // Find spawn location (NOT in city center)
+        // Find spawn location (NOT in city center, NOT in river)
         let centerX, centerY;
         let attempts = 0;
         do {
@@ -822,7 +822,7 @@ class Game {
             centerX = this.player.x + Math.cos(angle) * distance;
             centerY = this.player.y + Math.sin(angle) * distance;
             attempts++;
-        } while (this.mapSystem && this.mapSystem.isSafeZone(centerX, centerY) && attempts < 30);
+        } while (this.mapSystem && (this.mapSystem.isSafeZone(centerX, centerY) || this.mapSystem.isInRiver(centerX, centerY)) && attempts < 30);
 
         // Generate unique group ID
         const groupId = Date.now() + Math.random();
@@ -1448,18 +1448,47 @@ class Game {
                 if (this.mapSystem && this.mapSystem.isInCityCenter(mob.x, mob.y)) {
                     const cityCenterWorldX = this.mapSystem.cityCenterX * this.mapSystem.tileSize + this.mapSystem.tileSize / 2;
                     const cityCenterWorldY = this.mapSystem.cityCenterY * this.mapSystem.tileSize + this.mapSystem.tileSize / 2;
-                    
+
                     const pushAngle = Math.atan2(
                         mob.y - cityCenterWorldY,
                         mob.x - cityCenterWorldX
                     );
-                    
+
                     const safeDistance = this.mapSystem.cityCenterRadius * this.mapSystem.tileSize + 30;
                     mob.x = cityCenterWorldX + Math.cos(pushAngle) * safeDistance;
                     mob.y = cityCenterWorldY + Math.sin(pushAngle) * safeDistance;
                     mobDx = 0;
                     mobDy = 0;
                     mob.wanderTarget = null; // Reset wander target
+                }
+
+                // Prevent mobs from entering river
+                if (this.mapSystem) {
+                    const nextX = mob.x + mobDx;
+                    const nextY = mob.y + mobDy;
+
+                    // Check if next position is in river
+                    if (this.mapSystem.isInRiver(nextX, nextY)) {
+                        // Block movement and clear wander target
+                        mobDx = 0;
+                        mobDy = 0;
+                        mob.wanderTarget = null;
+                    }
+
+                    // Also check if already in river (shouldn't happen but safety check)
+                    if (this.mapSystem.isInRiver(mob.x, mob.y)) {
+                        // Push mob away from river to outside
+                        const centerWX = this.mapSystem.cityCenterX * this.mapSystem.tileSize + this.mapSystem.tileSize / 2;
+                        const centerWY = this.mapSystem.cityCenterY * this.mapSystem.tileSize + this.mapSystem.tileSize / 2;
+                        const pushAngle = Math.atan2(mob.y - centerWY, mob.x - centerWX);
+                        // Push to outside of river
+                        const safeDistance = (this.mapSystem.riverInnerRadius + this.mapSystem.riverWidth + 2) * this.mapSystem.tileSize;
+                        mob.x = centerWX + Math.cos(pushAngle) * safeDistance;
+                        mob.y = centerWY + Math.sin(pushAngle) * safeDistance;
+                        mobDx = 0;
+                        mobDy = 0;
+                        mob.wanderTarget = null;
+                    }
                 }
 
                 // Prevent mobs from entering inner river area (safe zone inside river)
@@ -1497,23 +1526,23 @@ class Game {
                 const angle = Math.atan2(this.player.y - mob.y, this.player.x - mob.x);
                 let mobDx = Math.cos(angle) * mob.speed;
                 let mobDy = Math.sin(angle) * mob.speed;
-                
+
                 // Prevent mobs from entering city center - STRICT RULE
                 const newX = mob.x + mobDx;
                 const newY = mob.y + mobDy;
-                
+
                 if (this.mapSystem && this.mapSystem.isInCityCenter(newX, newY)) {
                     // Calculate distance to city center
                     const cityCenterWorldX = this.mapSystem.cityCenterX * this.mapSystem.tileSize + this.mapSystem.tileSize / 2;
                     const cityCenterWorldY = this.mapSystem.cityCenterY * this.mapSystem.tileSize + this.mapSystem.tileSize / 2;
-                    
+
                     const distToCenter = Math.sqrt(
-                        Math.pow(newX - cityCenterWorldX, 2) + 
+                        Math.pow(newX - cityCenterWorldX, 2) +
                         Math.pow(newY - cityCenterWorldY, 2)
                     );
-                    
+
                     const cityCenterRadiusWorld = this.mapSystem.cityCenterRadius * this.mapSystem.tileSize;
-                    
+
                     // If mob is trying to enter city center, push it away
                     if (distToCenter < cityCenterRadiusWorld) {
                         // Calculate push away direction (away from city center)
@@ -1521,11 +1550,11 @@ class Game {
                             newY - cityCenterWorldY,
                             newX - cityCenterWorldX
                         );
-                        
+
                         // Push mob away from city center
                         mobDx = Math.cos(pushAngle) * mob.speed * 2; // Stronger push
                         mobDy = Math.sin(pushAngle) * mob.speed * 2;
-                        
+
                         // If mob is already inside, teleport it outside
                         if (distToCenter < cityCenterRadiusWorld * 0.8) {
                             const safeDistance = cityCenterRadiusWorld + 20;
@@ -1536,22 +1565,46 @@ class Game {
                         }
                     }
                 }
-                
+
                 // Also check current position - if already in city center, push out
                 if (this.mapSystem && this.mapSystem.isInCityCenter(mob.x, mob.y)) {
                     const cityCenterWorldX = this.mapSystem.cityCenterX * this.mapSystem.tileSize + this.mapSystem.tileSize / 2;
                     const cityCenterWorldY = this.mapSystem.cityCenterY * this.mapSystem.tileSize + this.mapSystem.tileSize / 2;
-                    
+
                     const pushAngle = Math.atan2(
                         mob.y - cityCenterWorldY,
                         mob.x - cityCenterWorldX
                     );
-                    
+
                     const safeDistance = this.mapSystem.cityCenterRadius * this.mapSystem.tileSize + 30;
                     mob.x = cityCenterWorldX + Math.cos(pushAngle) * safeDistance;
                     mob.y = cityCenterWorldY + Math.sin(pushAngle) * safeDistance;
                     mobDx = 0;
                     mobDy = 0;
+                }
+
+                // Prevent mobs from entering river while chasing
+                if (this.mapSystem) {
+                    // Check if next position is in river
+                    if (this.mapSystem.isInRiver(newX, newY)) {
+                        // Block movement - mob stops at river edge
+                        mobDx = 0;
+                        mobDy = 0;
+                    }
+
+                    // Also check if already in river (safety check)
+                    if (this.mapSystem.isInRiver(mob.x, mob.y)) {
+                        // Push mob away from river to outside
+                        const centerWX = this.mapSystem.cityCenterX * this.mapSystem.tileSize + this.mapSystem.tileSize / 2;
+                        const centerWY = this.mapSystem.cityCenterY * this.mapSystem.tileSize + this.mapSystem.tileSize / 2;
+                        const pushAngle = Math.atan2(mob.y - centerWY, mob.x - centerWX);
+                        // Push to outside of river
+                        const safeDistance = (this.mapSystem.riverInnerRadius + this.mapSystem.riverWidth + 2) * this.mapSystem.tileSize;
+                        mob.x = centerWX + Math.cos(pushAngle) * safeDistance;
+                        mob.y = centerWY + Math.sin(pushAngle) * safeDistance;
+                        mobDx = 0;
+                        mobDy = 0;
+                    }
                 }
 
                 // Prevent mobs from entering inner river area while chasing
@@ -1567,7 +1620,7 @@ class Game {
                     mobDx = 0;
                     mobDy = 0;
                 }
-                
+
                 mob.x += mobDx;
                 mob.y += mobDy;
                 mob.dx = mobDx;
