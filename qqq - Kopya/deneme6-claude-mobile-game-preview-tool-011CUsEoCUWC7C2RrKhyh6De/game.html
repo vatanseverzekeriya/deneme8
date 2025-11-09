@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Mobil Oyun</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #gameContainer {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 100%;
+        }
+
+        canvas {
+            background: #1a1a2e;
+            border-radius: 10px;
+            display: block;
+            touch-action: none;
+            max-width: 100%;
+            height: auto;
+        }
+
+        #score {
+            color: white;
+            text-align: center;
+            font-size: 24px;
+            margin-top: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        #mobileControls {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            gap: 10px;
+        }
+
+        .arrow-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .arrow-btn:active {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0.9);
+        }
+
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: flex;
+            }
+
+            #gameContainer {
+                padding: 10px;
+            }
+
+            #score {
+                font-size: 20px;
+            }
+        }
+
+        .live-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #4ade80;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="live-indicator">🔴 CANLI</div>
+
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="score">Skor: 0</div>
+        <div id="controls">
+            <button class="btn" onclick="game.reset()">Yeni Oyun</button>
+            <button class="btn" onclick="game.togglePause()">Duraklat</button>
+        </div>
+    </div>
+
+    <div id="mobileControls">
+        <div class="arrow-btn" ontouchstart="game.moveLeft()" ontouchend="game.stopMove()">◀</div>
+        <div class="arrow-btn" ontouchstart="game.moveRight()" ontouchend="game.stopMove()">▶</div>
+    </div>
+
+    <script>
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.scoreElement = document.getElementById('score');
+
+                // Responsive canvas
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // Oyun değişkenleri
+                this.player = {
+                    x: this.canvas.width / 2,
+                    y: this.canvas.height - 50,
+                    width: 50,
+                    height: 50,
+                    color: '#00ff88',
+                    speed: 5
+                };
+
+                this.obstacles = [];
+                this.score = 0;
+                this.gameOver = false;
+                this.paused = false;
+                this.keys = {};
+                this.moveDirection = 0;
+
+                // Event listeners
+                document.addEventListener('keydown', (e) => this.keys[e.key] = true);
+                document.addEventListener('keyup', (e) => this.keys[e.key] = false);
+
+                // Touch controls
+                this.canvas.addEventListener('touchmove', (e) => this.handleTouch(e), { passive: false });
+
+                this.init();
+            }
+
+            resizeCanvas() {
+                const maxWidth = Math.min(800, window.innerWidth - 40);
+                const maxHeight = Math.min(600, window.innerHeight - 200);
+                const ratio = 800 / 600;
+
+                if (maxWidth / ratio <= maxHeight) {
+                    this.canvas.style.width = maxWidth + 'px';
+                    this.canvas.style.height = (maxWidth / ratio) + 'px';
+                } else {
+                    this.canvas.style.width = (maxHeight * ratio) + 'px';
+                    this.canvas.style.height = maxHeight + 'px';
+                }
+            }
+
+            handleTouch(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = this.canvas.getBoundingClientRect();
+                const scaleX = this.canvas.width / rect.width;
+                const x = (touch.clientX - rect.left) * scaleX;
+                this.player.x = x - this.player.width / 2;
+            }
+
+            init() {
+                this.spawnObstacle();
+                this.gameLoop();
+            }
+
+            spawnObstacle() {
+                if (this.gameOver || this.paused) return;
+
+                const obstacle = {
+                    x: Math.random() * (this.canvas.width - 40),
+                    y: -40,
+                    width: 40,
+                    height: 40,
+                    speed: 2 + Math.random() * 2,
+                    color: `hsl(${Math.random() * 360}, 70%, 60%)`
+                };
+
+                this.obstacles.push(obstacle);
+                setTimeout(() => this.spawnObstacle(), 1000 + Math.random() * 1000);
+            }
+
+            update() {
+                if (this.gameOver || this.paused) return;
+
+                // Player movement
+                if (this.keys['ArrowLeft'] || this.keys['a'] || this.moveDirection < 0) {
+                    this.player.x -= this.player.speed;
+                }
+                if (this.keys['ArrowRight'] || this.keys['d'] || this.moveDirection > 0) {
+                    this.player.x += this.player.speed;
+                }
+
+                // Keep player in bounds
+                this.player.x = Math.max(0, Math.min(this.canvas.width - this.player.width, this.player.x));
+
+                // Update obstacles
+                for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                    this.obstacles[i].y += this.obstacles[i].speed;
+
+                    // Check collision
+                    if (this.checkCollision(this.player, this.obstacles[i])) {
+                        this.gameOver = true;
+                        alert('Oyun Bitti! Skorunuz: ' + this.score);
+                        return;
+                    }
+
+                    // Remove off-screen obstacles and increase score
+                    if (this.obstacles[i].y > this.canvas.height) {
+                        this.obstacles.splice(i, 1);
+                        this.score += 10;
+                        this.scoreElement.textContent = 'Skor: ' + this.score;
+                    }
+                }
+            }
+
+            checkCollision(rect1, rect2) {
+                return rect1.x < rect2.x + rect2.width &&
+                       rect1.x + rect1.width > rect2.x &&
+                       rect1.y < rect2.y + rect2.height &&
+                       rect1.y + rect1.height > rect2.y;
+            }
+
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#1a1a2e';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw player
+                this.ctx.fillStyle = this.player.color;
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = this.player.color;
+                this.ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
+
+                // Draw obstacles
+                this.obstacles.forEach(obstacle => {
+                    this.ctx.fillStyle = obstacle.color;
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowColor = obstacle.color;
+                    this.ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                });
+
+                this.ctx.shadowBlur = 0;
+
+                // Draw pause message
+                if (this.paused) {
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = '48px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('DURAKLATILDI', this.canvas.width / 2, this.canvas.height / 2);
+                }
+            }
+
+            gameLoop() {
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+
+            reset() {
+                this.player.x = this.canvas.width / 2;
+                this.obstacles = [];
+                this.score = 0;
+                this.gameOver = false;
+                this.paused = false;
+                this.scoreElement.textContent = 'Skor: 0';
+                this.spawnObstacle();
+            }
+
+            togglePause() {
+                this.paused = !this.paused;
+            }
+
+            moveLeft() {
+                this.moveDirection = -1;
+            }
+
+            moveRight() {
+                this.moveDirection = 1;
+            }
+
+            stopMove() {
+                this.moveDirection = 0;
+            }
+        }
+
+        // Start game
+        const game = new Game();
+
+        // Live reload support (guarded for file:// and missing server)
+        (function() {
+            try {
+                const hasWS = typeof WebSocket !== 'undefined';
+                const hasHost = typeof window !== 'undefined' && window.location && window.location.host;
+                const isHttp = typeof window !== 'undefined' && (window.location.protocol === 'http:' || window.location.protocol === 'https:');
+                if (hasWS && hasHost && isHttp) {
+                    const ws = new WebSocket('ws://' + window.location.host);
+                    ws.onmessage = function(event) {
+                        if (event.data === 'reload') {
+                            window.location.reload();
+                        }
+                    };
+                } else {
+                    console.warn('Live-reload dev server yok (file:// veya host yok). Oyun yine de çalışır.');
+                }
+            } catch (e) {
+                console.warn('Live-reload başlatılamadı:', e);
+            }
+        })();
+    </script>
+</body>
+</html>
